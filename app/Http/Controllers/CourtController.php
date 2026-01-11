@@ -27,6 +27,28 @@ class CourtController extends Controller
     return response()->json(['message' => 'Lapangan berhasil ditambah', 'data' => $court], 201);
 }
 
+    public function update(Request $request, $id)
+    {
+        $court = \App\Models\Court::find($id);
+
+        if (!$court) {
+            return response()->json(['message' => 'Lapangan tidak ditemukan'], 404);
+        }
+
+        $data = $request->only(['name', 'floor_type', 'price_per_hour', 'photo']);
+
+        $court->fill($data);
+        $court->save();
+
+        \App\Models\ActivityLog::create([
+            'user_name' => auth()->user()->name ?? 'system',
+            'activity' => 'Update Lapangan',
+            'description' => "Admin mengubah lapangan: " . $court->name . " (ID: " . $court->id . ")"
+        ]);
+
+        return response()->json(['message' => 'Lapangan berhasil diupdate', 'data' => $court], 200);
+    }
+
     public function destroy($id)
 {
     // 1. Cari data lapangan berdasarkan ID

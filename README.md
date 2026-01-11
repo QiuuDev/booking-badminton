@@ -1,23 +1,369 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Booking Badminton - API Documentation
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi REST API untuk sistem pemesanan lapangan badminton dengan fitur autentikasi JWT, verifikasi pembayaran, dan activity logging.
 
-## About Laravel
+## 📋 Daftar Isi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- [Tech Stack](#tech-stack)
+- [Instalasi](#instalasi)
+- [Database](#database)
+- [API Endpoints](#api-endpoints)
+- [Alur Penggunaan](#alur-penggunaan)
+- [Troubleshooting](#troubleshooting)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🛠️ Tech Stack
+
+- **Backend**: Laravel 10.x
+- **Database**: MySQL
+- **Authentication**: JWT (Tymon/JWT-Auth)
+- **PHP**: 8.1+
+- **Composer**: Latest
+
+## 📦 Instalasi
+
+### 1. Clone Repository
+```bash
+git clone <repo-url>
+cd booking_badminton
+```
+
+### 2. Install Dependencies
+```bash
+composer install
+```
+
+### 3. Setup Environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+### 4. Konfigurasi Database di `.env`
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=booking_badminton
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 5. Jalankan Migrations & Seed
+```bash
+php artisan migrate:fresh --seed
+```
+
+Ini akan:
+- Drop dan recreate semua tabel
+- Seed 2 user (admin & member) dengan password: `password123`
+- Seed 2 courts dan 2 equipment
+
+### 6. Jalankan Server
+```bash
+php artisan serve
+```
+
+Server berjalan di `http://127.0.0.1:8000`
+
+## 📊 Database
+
+### User
+- `id` (Primary Key)
+- `name` (String)
+- `email` (Unique)
+- `password` (Hashed)
+- `role` (admin/member) - Default: member
+- `timestamps`
+
+### Court (Lapangan)
+- `id` (Primary Key)
+- `name` (String)
+- `floor_type` (String: Karpet/Kayu)
+- `price_per_hour` (Integer)
+- `photo` (String - nullable)
+- `timestamps`
+
+### Booking
+- `id` (Primary Key)
+- `user_id` (FK → users)
+- `court_id` (FK → courts)
+- `booking_date` (Date)
+- `start_time` (Time)
+- `end_time` (Time)
+- `total_price` (Integer) - Otomatis dihitung
+- `status` (Enum: pending/verified/cancelled)
+- `timestamps`
+
+### Payment
+- `id` (Primary Key)
+- `booking_id` (FK → bookings)
+- `proof_image` (String)
+- `status` (Enum: pending/verified/rejected)
+- `timestamps`
+
+### Equipment
+- `id` (Primary Key)
+- `name` (String)
+- `price` (Integer)
+- `stock` (Integer)
+- `timestamps`
+
+### ActivityLog
+- `id` (Primary Key)
+- `user_name` (String)
+- `activity` (String)
+- `description` (Text)
+- `timestamps`
+
+## 🔐 API Endpoints
+
+### Authentication (Public)
+
+**Register User**
+```
+POST /api/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "role": "member"
+}
+```
+
+**Login**
+```
+POST /api/login
+Content-Type: application/json
+
+{
+  "email": "member@test.com",
+  "password": "password123"
+}
+
+Response: { "token": "jwt_token_here", "user": {...} }
+```
+
+### Courts (Authenticated)
+
+**List Courts**
+```
+GET /api/courts
+Authorization: Bearer <token>
+```
+
+**Create Court** (Admin only)
+```
+POST /api/courts
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Lapangan A",
+  "floor_type": "Karpet",
+  "price_per_hour": 60000,
+  "photo": "lapangan.jpg"
+}
+```
+
+**Update Court** (Admin only)
+```
+PUT /api/courts/{id}
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Lapangan A Updated",
+  "price_per_hour": 70000
+}
+```
+
+**Delete Court** (Admin only)
+```
+DELETE /api/courts/{id}
+Authorization: Bearer <token>
+```
+
+### Bookings (Authenticated)
+
+**List Bookings**
+```
+GET /api/bookings
+Authorization: Bearer <token>
+```
+
+**Create Booking** (Member)
+```
+POST /api/bookings
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "court_id": 1,
+  "booking_date": "2026-01-11",
+  "start_time": "08:00",
+  "end_time": "09:00"
+}
+
+Response: 
+{
+  "message": "Booking berhasil dibuat",
+  "total_bayar": 60000,
+  "data": {...}
+}
+```
+
+**Delete Booking** (Admin only)
+```
+DELETE /api/bookings/{id}
+Authorization: Bearer <token>
+```
+
+### Payments (Authenticated)
+
+**Upload Bukti Bayar** (Member)
+```
+POST /api/payments/upload
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+Form Data:
+- booking_id: 1 (Text)
+- image: <file.jpg> (File, max 5MB)
+
+Response: 
+{
+  "message": "Bukti bayar berhasil diunggah",
+  "data": { "id": 1, "status": "pending", ... }
+}
+```
+
+**Verifikasi Pembayaran** (Admin only)
+```
+PUT /api/payments/{id}/validate
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "status": "verified"
+}
+
+Status bisa: "verified" atau "rejected"
+```
+
+### Logs (Authenticated)
+
+**View Activity Logs** (Admin only)
+```
+GET /api/logs
+Authorization: Bearer <token>
+```
+
+### General
+
+**Logout**
+```
+POST /api/logout
+Authorization: Bearer <token>
+```
+
+**Refresh Token**
+```
+POST /api/refresh
+Authorization: Bearer <token>
+```
+
+## 🔄 Alur Penggunaan
+
+### Untuk Member
+
+1. **Register / Login**
+   ```
+   POST /api/login
+   email: member@test.com
+   password: password123
+   ```
+   → Dapatkan `token`
+
+2. **Lihat Lapangan**
+   ```
+   GET /api/courts
+   Header: Authorization: Bearer <token>
+   ```
+
+3. **Buat Booking**
+   ```
+   POST /api/bookings
+   Body: { court_id, booking_date, start_time, end_time }
+   ```
+   → Dapatkan `booking_id` dan `total_price`
+
+4. **Upload Bukti Pembayaran**
+   ```
+   POST /api/payments/upload
+   Body: { booking_id, image }
+   ```
+   → Dapatkan `payment_id`
+
+5. **Tunggu Verifikasi Admin**
+   - Status booking akan berubah dari `pending` → `verified` setelah admin verifikasi
+
+### Untuk Admin
+
+1. **Login sebagai Admin**
+   ```
+   POST /api/login
+   email: admin@test.com
+   password: password123
+   ```
+
+2. **Kelola Lapangan**
+   ```
+   POST/PUT/DELETE /api/courts/{id}
+   ```
+
+3. **Verifikasi Pembayaran**
+   ```
+   PUT /api/payments/{id}/validate
+   Body: { status: "verified" }
+   ```
+
+4. **Lihat Activity Logs**
+   ```
+   GET /api/logs
+   ```
+
+## 🐛 Troubleshooting
+
+### Migration Error: Foreign Key Constraint
+**Solusi**: Pastikan urutan migrasi benar - `courts` & `users` harus sebelum `bookings`, `bookings` sebelum `payments`
+
+### 401 Unauthorized
+**Solusi**: 
+- Pastikan token ada di header `Authorization: Bearer <token>`
+- Token sudah expired? Gunakan `POST /api/refresh`
+
+### 422 Validation Error pada Upload Image
+**Solusi**:
+- File harus image format (jpg/png/gif/bmp/webp)
+- Ukuran max 5MB
+- Pastikan file valid (tidak corrupted)
+
+### 405 Method Not Allowed
+**Solusi**: Cek HTTP method - pastikan menggunakan GET/POST/PUT/DELETE yang benar
+
+## 📝 Catatan
+
+- Default password seeder: `password123`
+- JWT token lifetime: 60 menit (configurable di `config/jwt.php`)
+- Image storage: `storage/app/public/proofs/`
+- Booking hanya bisa dibuat untuk tanggal hari ini atau lebih (after_or_equal:today)
+- Anti-bentrok: Sistem otomatis cek jadwal yang overlap
+
+---
+
+**Dibuat dengan ❤️ untuk Booking Badminton System**
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 

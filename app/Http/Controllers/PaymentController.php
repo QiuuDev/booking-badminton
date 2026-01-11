@@ -9,11 +9,10 @@ use Illuminate\Support\Facades\Storage;
 
 class PaymentController extends Controller
 {
-    // Member mengunggah bukti bayar
     public function uploadProof(Request $request) {
         $data = $request->validate([
             'booking_id' => 'required|exists:bookings,id',
-            'image' => 'required|image|max:5120', // max 5MB
+            'image' => 'required|image|max:5120',
         ]);
 
         // store image in public disk under proofs/ and get path
@@ -39,10 +38,10 @@ class PaymentController extends Controller
         $payment->update(['status' => $data['status']]); // verified atau rejected
 
         if ($data['status'] === 'verified') {
-            // mark booking as paid
+            // mark booking as verified
             $booking = Booking::find($payment->booking_id);
             if ($booking) {
-                $booking->update(['status' => 'Paid']);
+                $booking->update(['status' => 'verified']);
             }
         }
 

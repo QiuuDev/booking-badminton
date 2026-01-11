@@ -11,8 +11,17 @@ use Symfony\Component\HttpFoundation\Request as HttpFoundationRequest;
 
 class BookingController extends Controller
 {
+    public function index()
+    {
+        return response()->json(\App\Models\Booking::all());
+    }
+
     public function store(Request $request)
 {
+    $user = auth('api')->user();
+    if (!$user) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
     // 1. Validasi Input
     $request->validate([
         'court_id'     => 'required|exists:courts,id',
@@ -30,7 +39,7 @@ class BookingController extends Controller
         ->where(function ($query) use ($request) {
             $query->where(function ($q) use ($request) {
                 $q->where('start_time', '<=', $request->start_time)
-                  ->where('end_time', '>', $request->start_time);
+                ->where('end_time', '>', $request->start_time);
             })
             ->orWhere(function ($q) use ($request) {
                 $q->where('start_time', '<', $request->end_time)
@@ -54,7 +63,7 @@ class BookingController extends Controller
 
     // 5. Simpan ke Database
     $booking = \App\Models\Booking::create([
-        'user_id'      => auth('api')->id(),
+        'user_id'      => $user->id,
         'court_id'     => $request->court_id,
         'booking_date' => $request->booking_date,
         'start_time'   => $request->start_time,
@@ -65,7 +74,7 @@ class BookingController extends Controller
 
     // 6. Catat Log (Tugas Syaddad)
     \App\Models\ActivityLog::create([
-        'user_name'   => auth('api')->user()->name,
+        'user_name'   => $user->name,
         'activity'    => 'Membuat Booking',
         'description' => "Booking Lapangan " . $court->name . " senilai Rp " . number_format($totalPrice)
     ]);
@@ -78,6 +87,11 @@ class BookingController extends Controller
 }
 public function destroy($id)
 {
+    $user = auth('api')->user();
+    if (!$user) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
     // 1. Cari data booking berdasarkan ID
     $booking = \App\Models\Booking::find($id);
 
@@ -95,7 +109,7 @@ public function destroy($id)
 
     // 5. Catat ke Log Aktivitas (Tugas Syaddad)
     \App\Models\ActivityLog::create([
-        'user_name' => auth('api')->user()->name,
+        'user_name' => $user->name,
         'activity' => 'Hapus Booking',
         'description' => "Admin " . auth('api')->user()->name . " menghapus data booking ID: " . $bookingId
     ]);

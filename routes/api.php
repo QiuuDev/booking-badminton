@@ -10,32 +10,19 @@ use App\Http\Controllers\BookingController;
 // Publik
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+
 // Terproteksi JWT
 Route::middleware('auth:api')->group(function () {
-
     // Member: Upload bukti bayar
     Route::post('payments/upload', [PaymentController::class, 'uploadProof']);
+    Route::post('refresh', [AuthController::class, 'refresh']);
+    Route::post('logout', [AuthController::class, 'logout']);
 
-        // Khusus Admin: Validasi pembayaran
-        Route::middleware('role:admin')->group(function () {
-            Route::put('payments/{id}/validate', [PaymentController::class, 'validatePayment']);
-        });
-        Route::middleware('auth:api')->group(function () {
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-});
-    Route::middleware(['auth:api', 'role:admin'])->group(function () {
-    Route::post('courts', [CourtController::class, 'store']);
-    Route::delete('courts/{id}', [CourtController::class, 'destroy']);
-    Route::put('courts/{id}', [CourtController::class, 'update']);
-    Route::post('equipments', [EquipmentController::class, 'store']);
-    // Route::post('/equipments', [EquipmentController::class, 'store']);
-});
-
-    // Member bisa melihat data lapangan dan alat [cite: 9]
+    // Member bisa melihat data lapangan, alat, dan bookings
     Route::get('courts', [CourtController::class, 'index']);
     Route::get('equipments', [EquipmentController::class, 'index']);
+    Route::get('bookings', [BookingController::class, 'index']);
 
-    Route::middleware('auth:api')->group(function () {
     // Member melakukan booking
     Route::post('bookings', [BookingController::class, 'store']);
 
@@ -43,37 +30,18 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:admin')->get('logs', function() {
         return response()->json(\App\Models\ActivityLog::latest()->get());
     });
-    Route::middleware(['auth:api', 'role:admin'])->group(function () {
-    Route::put('/courts/{id}', [CourtController::class, 'update']);
-});
 
-    // Logout
-    Route::post('logout', [AuthController::class, 'logout']);
-});
-Route::get('/equipments', [EquipmentController::class, 'index']);
+    // Khusus Admin
+    Route::middleware('role:admin')->group(function () {
+        Route::post('courts', [CourtController::class, 'store']);
+        Route::put('courts/{id}', [CourtController::class, 'update']);
+        Route::delete('courts/{id}', [CourtController::class, 'destroy']);
 
-// ATAU jika hanya yang login yang bisa melihat:
-Route::middleware('auth:api')->group(function () {
-    Route::get('/equipments', [EquipmentController::class, 'index']);
-});
-Route::middleware(['auth:api', 'role:admin'])->group(function () {
-    Route::post('/equipments', [EquipmentController::class, 'store']);
-    Route::put('/equipments/{id}', [EquipmentController::class, 'update']);
-    Route::delete('/equipments/{id}', [EquipmentController::class, 'destroy']);
-});
-Route::middleware('auth:api')->group(function () {
-    Route::post('/bookings', [BookingController::class, 'store']);
-});
-// Grup rute yang memerlukan login
-Route::middleware('auth:api')->group(function () {
+        Route::post('equipments', [EquipmentController::class, 'store']);
+        Route::put('equipments/{id}', [EquipmentController::class, 'update']);
+        Route::delete('equipments/{id}', [EquipmentController::class, 'destroy']);
 
-    // Member & Admin bisa membuat booking
-    Route::post('/bookings', [BookingController::class, 'store']);
-
-    // KHUSUS ADMIN: Hanya admin yang bisa menghapus booking
-    Route::middleware('role:Admin')->group(function () {
-        Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
+        Route::put('payments/{id}/validate', [PaymentController::class, 'validatePayment']);
+        Route::delete('bookings/{id}', [BookingController::class, 'destroy']);
     });
-
-});
 });
