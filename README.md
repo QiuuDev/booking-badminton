@@ -1,3 +1,11 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/QiuuDev/QiuuDev/main/assets/booking-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/QiuuDev/QiuuDev/main/assets/booking-light.svg">
+  <img src="https://raw.githubusercontent.com/QiuuDev/QiuuDev/main/assets/booking-dark.svg" width="100%" alt="booking-badminton — a QiuuDev project">
+</picture>
+
+[← QiuuDev / Developer profile](https://github.com/QiuuDev)
+
 # Booking Badminton - API Documentation
 
 Aplikasi REST API untuk sistem pemesanan lapangan badminton dengan fitur autentikasi JWT, verifikasi pembayaran, dan activity logging.
