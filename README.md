@@ -31,8 +31,8 @@ Aplikasi REST API untuk sistem pemesanan lapangan badminton dengan fitur autenti
 
 ### 1. Clone Repository
 ```bash
-git clone <repo-url>
-cd booking_badminton
+git clone https://github.com/QiuuDev/booking-badminton.git
+cd booking-badminton
 ```
 
 ### 2. Install Dependencies
@@ -373,6 +373,10 @@ Authorization: Bearer <token>
 
 **Dibuat dengan ❤️ untuk Booking Badminton System**
 
+
+<details>
+<summary><b>Laravel framework resources and license</b></summary>
+
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
 ## Learning Laravel
@@ -418,3 +422,5 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+</details>
